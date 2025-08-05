@@ -1,0 +1,65 @@
+{
+	"pages": [
+		{
+			"path": "pages/welcome/welcome",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#1B2A41",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "基金发行公告提取系统",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		},
+		{
+			"path": "pages/upload/upload",
+			"style": {
+				"navigationBarTitleText": "文件上传",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		},
+		{
+			"path": "pages/results/results",
+			"style": {
+				"navigationBarTitleText": "提取结果",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		},
+		{
+			"path": "pages/history/history",
+			"style": {
+				"navigationBarTitleText": "处理历史",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		},
+		{
+			"path": "pages/statistics/statistics",
+			"style": {
+				"navigationBarTitleText": "统计分析",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "基金发行公告提取系统",
+		"navigationBarBackgroundColor": "#1B2A41",
+		"backgroundColor": "#F5F7FA"
+	}
+}

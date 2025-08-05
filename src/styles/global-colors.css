@@ -1,0 +1,184 @@
+/* 全局配色方案 CSS 覆盖 - 基于新设计规范 */
+
+/* 主要文字颜色替换 */
+* {
+    --color-title: #111111;
+    /* 标题字体色 - 深墨黑 */
+    --color-text: #3C3C3C;
+    /* 正文字体色 - 深灰色 */
+    --color-secondary: #B0B3B8;
+    /* 辅助主色 - 银灰色 */
+    --color-primary: #1B2A41;
+    /* 主色 - 深蓝色 */
+    --color-accent: #C9A86B;
+    /* 高亮色 - 金色 */
+    --color-background: #F5F7FA;
+    /* 背景色 - 浅灰蓝 */
+    --color-success: #2D6A4F;
+    /* 成功色 - 深绿色 */
+    --color-warning: #C9A86B;
+    /* 警告色 - 金色 */
+    --color-error: #A63D40;
+    /* 警示色 - 暗红色 */
+}
+
+/* 强制覆盖主要元素的颜色 */
+.container,
+.history-container,
+.statistics-container,
+.upload-container,
+.results-container {
+    background: var(--color-background) !important;
+}
+
+/* 标题颜色 */
+.header-title,
+.upload-title,
+.results-title,
+.stats-title,
+.overview-title,
+.legend-name,
+.quality-label,
+.rate-label {
+    color: var(--color-title) !important;
+}
+
+/* 正文文字颜色 */
+.result-value,
+.info-value,
+.detail-value,
+.rate-value,
+.stat-number,
+.quality-score {
+    color: var(--color-text) !important;
+}
+
+/* 辅助文字颜色 */
+.header-subtitle,
+.upload-desc,
+.result-label,
+.info-label,
+.detail-label,
+.stat-label,
+.legend-count,
+.file-size {
+    color: var(--color-secondary) !important;
+}
+
+/* 特殊情况：保持主要渐变卡片中的白色文字 */
+.info-item.primary .info-label,
+.info-item.primary .info-value {
+    color: #ffffff !important;
+}
+
+/* 按钮和交互元素 */
+.upload-btn,
+.extract-btn,
+.export-btn {
+    background: var(--color-primary) !important;
+    color: #ffffff !important;
+}
+
+.upload-btn:hover,
+.extract-btn:hover,
+.export-btn:hover {
+    background: var(--color-accent) !important;
+}
+
+/* 卡片背景 */
+.upload-card,
+.results-section,
+.stats-card,
+.info-item,
+.detail-item,
+.rate-item,
+.overview-card,
+.quality-card,
+.original-card {
+    background: #ffffff !important;
+    border: 1px solid var(--color-secondary) !important;
+    box-shadow: 0 2rpx 10rpx rgba(27, 42, 65, 0.1) !important;
+}
+
+/* 成功/警告/错误状态颜色 */
+.status-success {
+    color: var(--color-success) !important;
+    background: rgba(45, 106, 79, 0.1) !important;
+}
+
+.status-warning {
+    color: var(--color-warning) !important;
+    background: rgba(201, 168, 107, 0.1) !important;
+}
+
+.status-error {
+    color: var(--color-error) !important;
+    background: rgba(166, 61, 64, 0.1) !important;
+}
+
+/* 边框颜色 */
+.upload-area,
+.filter-card,
+.history-card {
+    border-color: var(--color-secondary) !important;
+}
+
+/* 渐变背景优化 */
+.info-item.primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* 进度条和填充颜色 */
+.rate-fill,
+.quality-fill {
+    background: var(--color-accent) !important;
+}
+
+.rate-bar,
+.quality-bar {
+    background: rgba(176, 179, 184, 0.2) !important;
+}
+
+/* 按钮颜色更新 */
+.action-btn.export {
+    background: var(--color-primary) !important;
+    color: #ffffff !important;
+}
+
+.action-btn.share {
+    background: var(--color-accent) !important;
+    color: #ffffff !important;
+}
+
+.action-btn.compare {
+    background: var(--color-secondary) !important;
+    color: #ffffff !important;
+}
+
+/* 标题区域特殊处理 */
+.section-title {
+    background: var(--color-primary) !important;
+    border-radius: 10rpx !important;
+    padding: 15rpx 20rpx !important;
+    margin-bottom: 20rpx !important;
+}
+
+.title-text {
+    color: #ffffff !important;
+    font-size: 32rpx !important;
+    font-weight: bold !important;
+}
+
+/* 统计数字特殊颜色 */
+.stat-number {
+    color: var(--color-accent) !important;
+}
+
+/* 确保详情卡片有足够的视觉区分 */
+.detail-item,
+.info-item:not(.primary) {
+    background: #ffffff !important;
+    border: 1px solid rgba(176, 179, 184, 0.3) !important;
+}

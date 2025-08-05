@@ -1,0 +1,9 @@
+@echo off
+echo 启动基金发行公告提取系统开发服务器...
+echo.
+echo 正在安装依赖...
+npm install
+echo.
+echo 启动H5开发服务器...
+npm run dev:h5
+pause 
