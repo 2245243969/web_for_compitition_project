@@ -12,6 +12,14 @@
           <text class="page-subtitle">查看文档处理统计数据和趋势分析</text>
         </view>
         
+        <!-- 加载状态 -->
+        <view v-if="isLoading" class="loading-section">
+          <view class="loading-card">
+            <view class="loading-spinner"></view>
+            <text class="loading-text">正在加载统计数据...</text>
+          </view>
+        </view>
+        
         <view class="statistics-container">
     <!-- 时间范围选择 -->
     <view class="time-filter-section">
@@ -139,6 +147,10 @@
 
 <script>
 import Sidebar from '../../components/Sidebar.vue'
+import { DOCUMENT_TYPES } from '../../config/fund-fields.js'
+import { checkAuthAndRedirect } from '../../utils/auth.js'
+import { getSystemStatisticsApi, getDocumentHistoryApi } from '../../utils/api.js'
+import { handleApiError } from '../../utils/errorHandler.js'
 
 export default {
   components: {
@@ -146,75 +158,18 @@ export default {
   },
   data() {
     return {
-      selectedPeriod: 'all',
+      selectedPeriod: '7d', // 默认显示7天
+      isLoading: true,
+      apiStatistics: null, // 从API获取的统计数据
       timePeriods: [
-        { label: '一日内', value: '1day' },
-        { label: '三日内', value: '3days' },
-        { label: '一周内', value: '1week' },
-        { label: '一个月内', value: '1month' },
+        { label: '今日', value: '1d' },
+        { label: '7天', value: '7d' },
+        { label: '30天', value: '30d' },
+        { label: '90天', value: '90d' },
         { label: '全部', value: 'all' }
       ],
       documentData: [
-        {
-          fileName: '华夏成长混合基金发行公告.pdf',
-          time: '2024-01-15 14:30',
-          status: 'success',
-          documentType: '发售公告'
-        },
-        {
-          fileName: '易方达消费行业股票基金.pdf',
-          time: '2024-01-14 16:20',
-          status: 'success',
-          documentType: '招募说明书'
-        },
-        {
-          fileName: '嘉实新兴产业股票基金.pdf',
-          time: '2024-01-13 09:15',
-          status: 'success',
-          documentType: '基金合同'
-        },
-        {
-          fileName: '广发稳健增长混合基金.pdf',
-          time: '2024-01-12 11:45',
-          status: 'success',
-          documentType: '发售公告'
-        },
-        {
-          fileName: '汇添富价值精选股票基金.pdf',
-          time: '2024-01-11 15:20',
-          status: 'success',
-          documentType: '招募说明书'
-        },
-        {
-          fileName: '南方中证500ETF联接基金.pdf',
-          time: '2024-01-10 09:30',
-          status: 'success',
-          documentType: '基金合同'
-        },
-        {
-          fileName: '博时主题行业股票基金.pdf',
-          time: '2024-01-09 13:15',
-          status: 'success',
-          documentType: '发售公告'
-        },
-        {
-          fileName: '招商中证白酒指数基金.pdf',
-          time: '2024-01-08 10:45',
-          status: 'success',
-          documentType: '招募说明书'
-        },
-        {
-          fileName: '工银瑞信医疗保健股票基金.pdf',
-          time: '2024-01-07 16:20',
-          status: 'success',
-          documentType: '基金合同'
-        },
-        {
-          fileName: '富国天惠成长混合基金.pdf',
-          time: '2024-01-06 14:30',
-          status: 'success',
-          documentType: '发售公告'
-        }
+
       ],
       hoveredSegment: null,
       hoverPosition: { x: 0, y: 0 },
@@ -260,21 +215,35 @@ export default {
     },
     
     documentTypeStats() {
-      const stats = {}
+      const stats = {
+        'fund_contract': 0,
+        'custody_agreement': 0,
+        'prospectus': 0
+      }
       this.filteredData.forEach(item => {
         if (item.status === 'success') {
           const type = item.documentType
-          stats[type] = (stats[type] || 0) + 1
+          if (stats.hasOwnProperty(type)) {
+            stats[type] = (stats[type] || 0) + 1
+          }
         }
       })
       return stats
     },
     
     totalDocuments() {
+      // 优先使用API数据
+      if (this.apiStatistics) {
+        return this.apiStatistics.totalDocuments || this.filteredData.length
+      }
       return this.filteredData.length
     },
     
     successCount() {
+      // 优先使用API数据
+      if (this.apiStatistics) {
+        return this.apiStatistics.totalDocuments || this.filteredData.filter(item => item.status === 'success').length
+      }
       return this.filteredData.filter(item => item.status === 'success').length
     },
     
@@ -303,17 +272,17 @@ export default {
         if (currentAngle < maxAngle && animatedEndAngle > currentAngle) {
           const segment = {
             id: type,
-            name: this.getDocumentTypeName(type),
+            name: this.getDocumentTypeLabel(type),
             count,
             percentage: Math.round((count / total) * 100),
-            color: this.typeColors[type] || this.typeColors['其他'],
+            color: this.getTypeColor(type),
             startAngle: currentAngle,
             endAngle: animatedEndAngle,
             midAngle: midAngle,
             path: this.createArcPath(currentAngle, animatedEndAngle, false),
             hoverPath: this.createArcPath(currentAngle, animatedEndAngle, true),
             hoverTransform: this.createHoverTransform(midAngle),
-            isHovered: this.hoveredSegment && this.hoveredSegment.name === this.getDocumentTypeName(type),
+            isHovered: this.hoveredSegment && this.hoveredSegment.name === this.getDocumentTypeLabel(type),
             opacity: Math.min(1, this.animationProgress * 1.2) // 稍微提前显示透明度
           }
           
@@ -328,11 +297,86 @@ export default {
   },
   
   methods: {
+    // 加载统计数据
+    async loadStatistics() {
+      this.isLoading = true
+      try {
+        // 获取系统统计数据
+        const statisticsData = await getSystemStatisticsApi()
+        if (statisticsData) {
+          this.apiStatistics = statisticsData
+          
+          // 获取文档历史记录
+          const historyParams = {
+            page: 1,
+            pageSize: 50,
+            sortBy: 'createdAt',
+            sortOrder: 'desc'
+          }
+          
+          if (this.selectedPeriod !== 'all') {
+            const endDate = new Date().toISOString().split('T')[0]
+            let startDate = new Date()
+            
+            switch (this.selectedPeriod) {
+              case '1d':
+                startDate.setDate(startDate.getDate() - 1)
+                break
+              case '7d':
+                startDate.setDate(startDate.getDate() - 7)
+                break
+              case '30d':
+                startDate.setDate(startDate.getDate() - 30)
+                break
+              case '90d':
+                startDate.setDate(startDate.getDate() - 90)
+                break
+            }
+            
+            historyParams.startDate = startDate.toISOString().split('T')[0]
+            historyParams.endDate = endDate
+          }
+          
+          try {
+            console.log('📊 获取历史数据，查询参数:', historyParams)
+            
+            const historyData = await getDocumentHistoryApi(historyParams)
+            if (historyData && (historyData.documents || historyData.records)) {
+              // 将API数据转换为组件使用的格式
+              const documents = historyData.documents || historyData.records || []
+              this.documentData = documents.map(doc => ({
+                fileName: doc.fileName || doc.originalName,
+                time: new Date(doc.createdAt || doc.uploadTime).toLocaleString('zh-CN'),
+                status: doc.status === 'COMPLETED' || doc.status === 'completed' ? 'success' : 
+                       doc.status === 'PROCESSING' || doc.status === 'processing' ? 'processing' : 'failed',
+                documentType: doc.documentType
+              }))
+            } else {
+              this.documentData = []
+            }
+          } catch (historyError) {
+            console.warn('获取文档历史失败，使用演示数据:', historyError)
+            // 继续使用默认演示数据
+          }
+        }
+      } catch (error) {
+        console.error('加载统计数据失败:', error)
+        handleApiError(error, { context: 'statistics_load' })
+        // 使用默认演示数据
+      } finally {
+        this.isLoading = false
+        // 启动图表动画
+        setTimeout(() => {
+          this.startChartAnimation()
+        }, 100)
+      }
+    },
+    
     selectTimePeriod(period) {
       if (this.selectedPeriod === period) return
       
       this.selectedPeriod = period
-      this.startChartAnimation()
+      this.loadStatistics() // 重新加载数据
     },
     
     // 开始图表动画
@@ -483,7 +527,44 @@ export default {
     // 清除悬停状态
     clearHover() {
       this.hoveredSegment = null
+    },
+    
+    getDocumentTypeLabel(type) {
+      const labels = {
+        'fund_contract': '基金合同',
+        'custody_agreement': '托管协议', 
+        'prospectus': '招募说明书'
+      }
+      return labels[type] || type
+    },
+    
+    getDocumentTypeIcon(type) {
+      const icons = {
+        'fund_contract': '📄',
+        'custody_agreement': '🏦',
+        'prospectus': '📊'
+      }
+      return icons[type] || '📄'
+    },
+    
+    getTypeColor(type) {
+      const colors = {
+        'fund_contract': '#667eea',
+        'custody_agreement': '#f093fb',
+        'prospectus': '#4facfe'
+      }
+      return colors[type] || '#999999'
     }
+  },
+  
+  onLoad() {
+    // 检查用户是否已登录，未登录则跳转到登录页
+    if (!checkAuthAndRedirect()) {
+      return
+    }
+    
+    // 加载统计数据
+    this.loadStatistics()
   },
   
   mounted() {
@@ -504,6 +585,39 @@ export default {
 </script>
 
 <style>
+/* 加载状态样式 */
+.loading-section {
+  margin-bottom: 40rpx;
+}
+
+.loading-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 60rpx 40rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: var(--color-secondary);
+}
+
 .statistics-container {
   min-height: 100vh;
   background: #f5f5f5;

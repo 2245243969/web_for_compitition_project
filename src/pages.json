@@ -1,12 +1,12 @@
 {
 	"pages": [
 		{
-			"path": "pages/welcome/welcome",
+			"path": "pages/login/login",
 			"style": {
 				"navigationBarTitleText": "",
 				"navigationBarBackgroundColor": "#1B2A41",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#1B2A41",
+				"backgroundColor": "#F5F7FA",
 				"navigationStyle": "custom"
 			}
 		},
@@ -50,6 +50,24 @@
 			"path": "pages/statistics/statistics",
 			"style": {
 				"navigationBarTitleText": "统计分析",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		},
+		{
+			"path": "pages/settings/settings",
+			"style": {
+				"navigationBarTitleText": "用户设置",
+				"navigationBarBackgroundColor": "#1B2A41",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#F5F7FA"
+			}
+		},
+		{
+			"path": "pages/global-config/global-config",
+			"style": {
+				"navigationBarTitleText": "全局模型配置",
 				"navigationBarBackgroundColor": "#1B2A41",
 				"navigationBarTextStyle": "white",
 				"backgroundColor": "#F5F7FA"

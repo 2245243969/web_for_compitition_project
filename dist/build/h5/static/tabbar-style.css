@@ -1,0 +1,23 @@
+/* 精确针对底部导航栏的样式 */
+
+/* tabBar容器 - 使用新配色方案 */
+.uni-tabbar {
+  height: 75px !important;
+  min-height: 75px !important;
+  border-top: 1px solid #B0B3B8 !important;
+  box-shadow: 0 -2px 8px rgba(27, 42, 65, 0.1) !important;
+  background-color: #F5F7FA !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* tabBar项目 - 使用新配色方案 */
+.uni-tabbar .uni-tabbar-item {
+  color: #B0B3B8 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  height: 100% !important;
+  padding: 6px 0 !important;
+}

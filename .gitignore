@@ -9,7 +9,7 @@ lerna-debug.log*
 
 node_modules
 .DS_Store
-dist
+# dist  # 注释掉dist，因为Gitee Pages需要构建产物
 *.local
 
 # Editor directories and files

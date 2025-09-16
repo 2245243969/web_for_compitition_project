@@ -19,7 +19,8 @@
       
       <!-- 主内容区域 -->
       <view class="content-area" :class="{ 'content-mobile': isMobile }">
-        <router-view />
+        <!-- 直接显示登录页面 -->
+        <LoginPage />
       </view>
     </view>
   </view>
@@ -27,22 +28,27 @@
 
 <script>
 import Sidebar from './components/Sidebar.vue'
+import LoginPage from './pages/login/login.vue'
+import { checkAndRefreshToken } from './utils/api.js'
 
 export default {
   components: {
-    Sidebar
+    Sidebar,
+    LoginPage
   },
   data() {
     return {
       showSidebar: false,
       isMobile: false,
-      pageTitle: '基金发行公告提取系统'
+      pageTitle: '基金公告提取系统',
+      tokenCheckTimer: null
     }
   },
   onLaunch: function () {
     console.log('App Launch')
     this.checkMobile()
     this.setupResizeListener()
+    this.startTokenCheckTimer()
   },
   onShow: function () {
     console.log('App Show')
@@ -70,7 +76,36 @@ export default {
     },
     closeSidebar() {
       this.showSidebar = false
+    },
+    
+    // 启动Token检查定时器
+    startTokenCheckTimer() {
+      // 每10分钟检查一次Token状态
+      this.tokenCheckTimer = setInterval(async () => {
+        try {
+          const isLoggedIn = uni.getStorageSync('isLoggedIn')
+          if (isLoggedIn) {
+            console.log('⏰ 定期检查Token状态...')
+            await checkAndRefreshToken()
+          }
+        } catch (error) {
+          console.error('定期Token检查失败:', error)
+        }
+      }, 10 * 60 * 1000) // 10分钟
+    },
+    
+    // 清理定时器
+    clearTokenCheckTimer() {
+      if (this.tokenCheckTimer) {
+        clearInterval(this.tokenCheckTimer)
+        this.tokenCheckTimer = null
+      }
     }
+  },
+  
+  // 应用销毁时清理定时器
+  onUnload() {
+    this.clearTokenCheckTimer()
   }
 }
 </script>

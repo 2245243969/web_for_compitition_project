@@ -9,220 +9,154 @@
         <!-- 页面标题 -->
         <view class="page-header fade-in-up">
           <text class="page-title">处理历史</text>
-          <text class="page-subtitle">查看所有文档的处理记录和历史信息</text>
+          <text class="page-subtitle">查看文档处理历史记录和统计信息</text>
         </view>
         
         <view class="history-container">
-    <!-- 统计概览 -->
-    <view class="stats-section">
-      <view class="stats-card">
-        <view class="stats-grid">
-          <view class="stat-item">
-            <text class="stat-number">{{ totalFiles }}</text>
-            <text class="stat-label">总文件数</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-number">{{ successCount }}</text>
-            <text class="stat-label">成功提取</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-number">{{ processingCount }}</text>
-            <text class="stat-label">处理中</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-number">{{ failedCount }}</text>
-            <text class="stat-label">提取失败</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- 筛选器 -->
     <view class="filter-section">
       <view class="filter-card">
-        <view class="filter-header">
-          <text class="filter-title">筛选条件</text>
-          <button class="clear-filter-btn" @click="clearFilters">
-            <text class="btn-text">清除筛选</text>
-          </button>
+              <view class="filter-row">
+                <view class="filter-group">
+                  <text class="filter-label">文档类型</text>
+                  <picker 
+                    mode="selector" 
+                    :value="filterDocumentTypeIndex" 
+                    :range="documentTypeOptions" 
+                    range-key="label"
+                    @change="onDocumentTypeChange"
+                  >
+                    <view class="picker-view">
+                      <text class="picker-text">{{ documentTypeOptions[filterDocumentTypeIndex].label }}</text>
+                      <text class="picker-arrow">▼</text>
+                    </view>
+                  </picker>
         </view>
-        <view class="filter-options">
+                
           <view class="filter-group">
-            <text class="filter-label">状态筛选</text>
-            <view class="filter-buttons">
-              <button 
-                class="filter-btn" 
-                :class="{ active: statusFilter === 'all' }"
-                @click="setStatusFilter('all')"
-              >
-                <text class="btn-text">全部</text>
-              </button>
-              <button 
-                class="filter-btn" 
-                :class="{ active: statusFilter === 'success' }"
-                @click="setStatusFilter('success')"
-              >
-                <text class="btn-text">成功</text>
-              </button>
-              <button 
-                class="filter-btn" 
-                :class="{ active: statusFilter === 'processing' }"
-                @click="setStatusFilter('processing')"
-              >
-                <text class="btn-text">处理中</text>
-              </button>
-              <button 
-                class="filter-btn" 
-                :class="{ active: statusFilter === 'failed' }"
-                @click="setStatusFilter('failed')"
-              >
-                <text class="btn-text">失败</text>
-              </button>
+                  <text class="filter-label">状态</text>
+                  <picker 
+                    mode="selector" 
+                    :value="filterStatusIndex" 
+                    :range="statusOptions" 
+                    range-key="label"
+                    @change="onStatusChange"
+                  >
+                    <view class="picker-view">
+                      <text class="picker-text">{{ statusOptions[filterStatusIndex].label }}</text>
+                      <text class="picker-arrow">▼</text>
             </view>
+                  </picker>
           </view>
+                
           <view class="filter-group">
-            <text class="filter-label">类型筛选</text>
-            <view class="filter-buttons">
-              <button 
-                class="filter-btn" 
-                :class="{ active: typeFilter === 'all' }"
-                @click="setTypeFilter('all')"
-              >
-                <text class="btn-text">全部</text>
+                  <button class="filter-btn" @click="applyFilters" :disabled="isLoading">
+                    <text class="btn-text">{{ isLoading ? '查询中...' : '查询' }}</text>
               </button>
-              <button 
-                class="filter-btn" 
-                :class="{ active: typeFilter === '发售公告' }"
-                @click="setTypeFilter('发售公告')"
-              >
-                <text class="btn-text">发售公告</text>
-              </button>
-              <button 
-                class="filter-btn" 
-                :class="{ active: typeFilter === '招募说明书' }"
-                @click="setTypeFilter('招募说明书')"
-              >
-                <text class="btn-text">招募说明书</text>
-              </button>
-              <button 
-                class="filter-btn" 
-                :class="{ active: typeFilter === '基金合同' }"
-                @click="setTypeFilter('基金合同')"
-              >
-                <text class="btn-text">基金合同</text>
-              </button>
-            </view>
-          </view>
-          <view class="filter-group">
-            <text class="filter-label">时间范围</text>
-            <view class="date-inputs">
-              <input 
-                class="date-input" 
-                type="date" 
-                v-model="startDate"
-                placeholder="开始日期"
-              />
-              <text class="date-separator">至</text>
-              <input 
-                class="date-input" 
-                type="date" 
-                v-model="endDate"
-                placeholder="结束日期"
-              />
-            </view>
           </view>
         </view>
       </view>
     </view>
 
     <!-- 历史记录列表 -->
-    <view class="history-section">
-      <view class="history-header">
-        <text class="history-title">处理历史</text>
-        <view class="history-actions">
-          <button class="action-btn" @click="exportHistory">
-            <text class="btn-text">导出记录</text>
-          </button>
-          <button class="action-btn" @click="clearHistory">
-            <text class="btn-text">清空历史</text>
-          </button>
-        </view>
-      </view>
-      
-      <view class="history-list">
-        <view 
-          v-for="(item, index) in filteredHistoryList" 
-          :key="index" 
-          class="history-item"
-          @click="viewHistoryDetail(item)"
-        >
-          <view class="item-header">
-            <view class="item-info">
-              <text class="item-name">{{ item.fileName }}</text>
-              <text class="item-time">{{ item.time }}</text>
+          <view class="records-section" translate="no">
+            <view v-if="isLoading" class="loading-placeholder">
+              <text class="loading-text">正在加载历史记录...</text>
             </view>
-            <view class="item-status" :class="item.status">
-              <text class="status-text">{{ getStatusText(item.status) }}</text>
+            
+            <view v-else-if="records.length === 0" class="empty-placeholder">
+              <text class="empty-icon">📄</text>
+              <text class="empty-text">暂无处理记录</text>
+              <text class="empty-desc">开始上传文档来创建处理记录</text>
+              <view class="data-recovery-tip">
+                <text class="recovery-title">💡 数据恢复提示</text>
+                <text class="recovery-desc">如果您之前有处理记录但现在看不到，可能是因为：</text>
+                <text class="recovery-item">• 记录被意外删除</text>
+                <text class="recovery-item">• 筛选条件过于严格</text>
+                <text class="recovery-item">• 网络连接问题</text>
+                <text class="recovery-action">请尝试刷新页面或联系管理员恢复数据</text>
+              </view>
+              
+              <!-- 调试模式：添加测试记录 -->
+              <view v-if="$options.name === 'development'" class="debug-section">
+                <text class="debug-title">🔧 调试模式</text>
+                <button class="debug-btn" @click="addTestRecord">添加测试记录</button>
+              </view>
             </view>
+            
+            <view v-else class="records-list">
+              <view 
+                class="record-card"
+                v-for="record in records"
+                :key="record.taskId"
+                @click="viewRecordDetail(record)"
+              >
+                <view class="record-header">
+                  <view class="record-title">
+                    <text class="file-name">{{ record.fileName }}</text>
+                    <view class="status-badge" :class="record.status">
+                      <text class="status-text">{{ getStatusText(record.status) }}</text>
+                    </view>
+                  </view>
+                  <text class="record-time">{{ formatTime(record.createdAt) }}</text>
           </view>
           
-                     <view class="item-details">
-             <view class="detail-row">
-               <text class="detail-label">文件大小:</text>
-               <text class="detail-value">{{ item.fileSize }}</text>
+                <view class="record-content">
+                  <view class="record-info">
+                    <view class="info-item info-type">
+                      <text class="info-label">文档类型</text>
+                      <text class="info-value">{{ getDocumentTypeLabel(record.documentType) }}</text>
              </view>
-             <view class="detail-row">
-               <text class="detail-label">文档种类:</text>
-               <text class="detail-value">{{ item.documentType }}</text>
+                    <view class="info-item info-fields">
+                      <text class="info-label">提取字段</text>
+                      <text class="info-value">{{ getExtractedFieldsDisplay(record) }}</text>
              </view>
-             <view class="detail-row">
-               <text class="detail-label">提取字段:</text>
-               <text class="detail-value">{{ item.extractedFields }} 个</text>
+                    <view class="info-item info-time">
+                      <text class="info-label">处理时间</text>
+                      <text class="info-value">{{ getProcessingTimeDisplay(record) }}</text>
              </view>
-             <view class="detail-row">
-               <text class="detail-label">处理时间:</text>
-               <text class="detail-value">{{ item.processingTime }}s</text>
              </view>
-             <view class="detail-row" v-if="item.accuracy">
-               <text class="detail-label">准确率:</text>
-               <text class="detail-value">{{ item.accuracy }}%</text>
-             </view>
-           </view>
-          
-          <view class="item-actions">
-            <button class="action-btn small view" @click.stop="viewResult(item)">
+
+                  <view class="record-actions">
+                    <button 
+                      class="action-btn view-btn" 
+                      @click.stop="viewResults(record)"
+                      :disabled="record.status?.toLowerCase() !== 'completed'"
+                    >
               <text class="btn-text">查看结果</text>
             </button>
-            <button class="action-btn small download" @click.stop="downloadResult(item)">
-              <text class="btn-text">下载</text>
-            </button>
-            <button class="action-btn small delete" @click.stop="deleteHistory(item)">
-              <text class="btn-text">删除</text>
+                    <button 
+                      class="action-btn delete-btn" 
+                      @click.stop="deleteRecord(record)"
+                    >
+                      <text class="btn-text">删除</text>
             </button>
           </view>
         </view>
       </view>
-      
-      <!-- 空状态 -->
-      <view v-if="filteredHistoryList.length === 0" class="empty-state">
-        <view class="empty-icon">
-          <text class="icon">📋</text>
-        </view>
-        <text class="empty-title">暂无历史记录</text>
-        <text class="empty-desc">上传文件开始提取数据</text>
       </view>
     </view>
 
-    <!-- 分页 -->
-    <view v-if="filteredHistoryList.length > 0" class="pagination-section">
+          <!-- 分页器 -->
+          <view v-if="pagination.totalPages > 1" class="pagination-section" translate="no">
       <view class="pagination">
-        <button class="page-btn" :disabled="currentPage === 1" @click="prevPage">
+              <button 
+                class="page-btn" 
+                :disabled="pagination.page <= 1"
+                @click="changePage(pagination.page - 1)"
+              >
           <text class="btn-text">上一页</text>
         </button>
+              
         <view class="page-info">
-          <text class="page-text">第 {{ currentPage }} 页，共 {{ totalPages }} 页</text>
+                <text class="page-text">{{ pagination.page }} / {{ pagination.totalPages }}</text>
         </view>
-        <button class="page-btn" :disabled="currentPage === totalPages" @click="nextPage">
+              
+              <button 
+                class="page-btn" 
+                :disabled="pagination.page >= pagination.totalPages"
+                @click="changePage(pagination.page + 1)"
+              >
           <text class="btn-text">下一页</text>
         </button>
       </view>
@@ -235,6 +169,11 @@
 
 <script>
 import Sidebar from '../../components/Sidebar.vue'
+import { getDocumentHistoryApi, getExtractionResultsApi, getHistoryResultsApi, deleteDocumentRecordApi } from '../../utils/api.js'
+import { handleApiError } from '../../utils/errorHandler.js'
+import { checkAuthAndRedirect } from '../../utils/auth.js'
+import { printAuthDiagnosis, fixAuthIssues } from '../../utils/auth-diagnostic.js'
+import { debugHistoryApiResponse, compareApiResponses } from '../../utils/api-debug.js'
 
 export default {
   components: {
@@ -242,621 +181,1065 @@ export default {
   },
   data() {
     return {
-      historyList: [
-        {
-          id: 1,
-          fileName: '华夏成长混合基金发行公告.pdf',
-          time: '2024-01-15 14:30',
-          status: 'success',
-          fileSize: '2.5 MB',
-          extractedFields: 15,
-          processingTime: 3.5,
-          accuracy: 92,
-          documentType: '发售公告'
-        },
-        {
-          id: 2,
-          fileName: '易方达消费行业股票基金.pdf',
-          time: '2024-01-14 16:20',
-          status: 'success',
-          fileSize: '3.1 MB',
-          extractedFields: 14,
-          processingTime: 4.2,
-          accuracy: 89,
-          documentType: '招募说明书'
-        },
-        {
-          id: 3,
-          fileName: '嘉实新兴产业股票基金.pdf',
-          time: '2024-01-13 09:15',
-          status: 'processing',
-          fileSize: '2.8 MB',
-          extractedFields: 0,
-          processingTime: 0,
-          accuracy: 0,
-          documentType: '基金合同'
-        },
-        {
-          id: 4,
-          fileName: '广发稳健增长混合基金.pdf',
-          time: '2024-01-12 11:45',
-          status: 'failed',
-          fileSize: '1.9 MB',
-          extractedFields: 0,
-          processingTime: 0,
-          accuracy: 0,
-          documentType: '发售公告'
-        },
-        {
-          id: 5,
-          fileName: '招商中证白酒指数基金.pdf',
-          time: '2024-01-11 15:30',
-          status: 'success',
-          fileSize: '2.2 MB',
-          extractedFields: 13,
-          processingTime: 3.1,
-          accuracy: 94,
-          documentType: '招募说明书'
-        }
+      records: [],
+      isLoading: true,
+      
+      // 筛选器
+      filterDocumentTypeIndex: 0,
+      filterStatusIndex: 0,
+      documentTypeOptions: [
+        { value: '', label: '全部类型' },
+        { value: 'fund_contract', label: '基金合同' },
+        { value: 'custody_agreement', label: '托管协议' },
+        { value: 'prospectus', label: '招募说明书' }
       ],
-      statusFilter: 'all',
-      typeFilter: 'all',
-      startDate: '',
-      endDate: '',
-      currentPage: 1,
-      pageSize: 10
-    }
-  },
-  computed: {
-    totalFiles() {
-      return this.historyList.length
-    },
-    successCount() {
-      return this.historyList.filter(item => item.status === 'success').length
-    },
-    processingCount() {
-      return this.historyList.filter(item => item.status === 'processing').length
-    },
-    failedCount() {
-      return this.historyList.filter(item => item.status === 'failed').length
-    },
-    filteredHistoryList() {
-      let filtered = this.historyList
+      statusOptions: [
+        { value: '', label: '全部状态' },
+        { value: 'completed', label: '已完成' },
+        { value: 'processing', label: '处理中' },
+        { value: 'failed', label: '失败' }
+      ],
       
-      // 状态筛选
-      if (this.statusFilter !== 'all') {
-        filtered = filtered.filter(item => item.status === this.statusFilter)
+      // 分页
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        totalPages: 0
+      },
+      
+      // 删除安全控制
+      deleteOperations: {
+        count: 0,
+        lastDeleteTime: 0,
+        maxDeletesPerMinute: 3  // 每分钟最多删除3个记录
       }
-      
-      // 类型筛选
-      if (this.typeFilter !== 'all') {
-        filtered = filtered.filter(item => item.documentType === this.typeFilter)
-      }
-      
-      // 日期筛选
-      if (this.startDate) {
-        filtered = filtered.filter(item => {
-          const itemDate = new Date(item.time.split(' ')[0])
-          const startDate = new Date(this.startDate)
-          return itemDate >= startDate
-        })
-      }
-      
-      if (this.endDate) {
-        filtered = filtered.filter(item => {
-          const itemDate = new Date(item.time.split(' ')[0])
-          const endDate = new Date(this.endDate)
-          return itemDate <= endDate
-        })
-      }
-      
-      return filtered
-    },
-    totalPages() {
-      return Math.ceil(this.filteredHistoryList.length / this.pageSize)
     }
   },
   methods: {
-    setStatusFilter(status) {
-      this.statusFilter = status
-      this.currentPage = 1
-    },
-    
-    setTypeFilter(type) {
-      this.typeFilter = type
-      this.currentPage = 1
-    },
-    
-    clearFilters() {
-      this.statusFilter = 'all'
-      this.typeFilter = 'all'
-      this.startDate = ''
-      this.endDate = ''
-      this.currentPage = 1
-    },
-    
-    getStatusText(status) {
-      const texts = {
-        success: '提取成功',
-        processing: '处理中',
-        failed: '提取失败'
-      }
-      return texts[status] || status
-    },
-    
-    viewHistoryDetail(item) {
-      if (item.status === 'success') {
-        uni.navigateTo({
-          url: '/pages/results/results'
-        })
-      } else {
-        uni.showToast({
-          title: '该文件尚未处理完成，无法查看详情',
-          icon: 'none'
-        })
-      }
-    },
-    
-    viewResult(item) {
-      if (item.status === 'success') {
-        uni.navigateTo({
-          url: '/pages/results/results'
-        })
-      } else {
-        uni.showToast({
-          title: '该文件尚未处理完成',
-          icon: 'none'
-        })
-      }
-    },
-    
-    downloadResult(item) {
-      if (item.status === 'success') {
-        uni.showToast({
-          title: '下载成功',
-          icon: 'success'
-        })
-      } else {
-        uni.showToast({
-          title: '该文件尚未处理完成',
-          icon: 'none'
-        })
-      }
-    },
-    
-    deleteHistory(item) {
-      uni.showModal({
-        title: '确认删除',
-        content: `确定要删除 "${item.fileName}" 的记录吗？`,
-        success: (res) => {
-          if (res.confirm) {
-            const index = this.historyList.findIndex(h => h.id === item.id)
-            if (index > -1) {
-              this.historyList.splice(index, 1)
-              uni.showToast({
-                title: '删除成功',
-                icon: 'success'
+    // 加载历史记录
+    async loadHistory() {
+      this.isLoading = true
+      
+      try {
+        // 在API调用前进行认证诊断
+        console.log('🔍 开始认证诊断...')
+        const diagnosis = printAuthDiagnosis()
+        
+        // 如果发现认证问题，尝试修复
+        if (diagnosis.issues.length > 0) {
+          console.warn('⚠️ 发现认证问题，尝试修复...')
+          const fixed = fixAuthIssues()
+          if (fixed) {
+            // 如果修复了问题，函数会自动跳转，这里直接返回
+            return
+          }
+        }
+        
+        const params = {
+          page: this.pagination.page,
+          pageSize: this.pagination.pageSize
+        }
+        
+        // 添加筛选条件
+        if (this.filterDocumentTypeIndex > 0) {
+          params.documentType = this.documentTypeOptions[this.filterDocumentTypeIndex].value
+        }
+        
+        if (this.filterStatusIndex > 0) {
+          params.status = this.statusOptions[this.filterStatusIndex].value
+        }
+        
+        console.log('📄 加载历史记录，请求参数:', params)
+        
+        // 开发环境下运行额外的调试
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔧 运行API响应格式调试...')
+          try {
+            await compareApiResponses()
+          } catch (debugError) {
+            console.warn('⚠️ 调试过程出错，继续正常流程:', debugError)
+          }
+        }
+        
+        const response = await getDocumentHistoryApi(params)
+        
+        if (response) {
+          // 根据更新后的API响应格式处理数据
+          this.records = response.records || []
+          this.pagination = {
+            ...this.pagination,
+            ...response.pagination
+          }
+          
+          console.log('📄 历史记录加载成功:', {
+            recordsCount: this.records.length,
+            pagination: this.pagination,
+            responseData: response
+          })
+          
+          // 详细检查数据结构
+          console.log('🔍 数据结构详细分析:')
+          console.log('  - response.records 长度:', response.records ? response.records.length : 'undefined')
+          console.log('  - records 实际内容:', this.records)
+          console.log('  - pagination 数据:', this.pagination)
+          
+          // 如果有记录，显示第一条记录的结构
+          if (this.records.length > 0) {
+            console.log('📋 第一条记录结构:', this.records[0])
+            console.log('📋 记录字段:', Object.keys(this.records[0]))
+            
+            // 检查关键字段
+            const firstRecord = this.records[0]
+            console.log('🔍 关键字段检查:')
+            console.log('  - status:', firstRecord.status)
+            console.log('  - taskId:', firstRecord.taskId)
+            console.log('  - id:', firstRecord.id)
+            console.log('  - fileName:', firstRecord.fileName)
+            console.log('  - documentType:', firstRecord.documentType)
+            
+            // 检查按钮状态
+            const isDisabled = firstRecord.status !== 'completed'
+            console.log('  - 查看结果按钮是否禁用:', isDisabled)
+            console.log('  - 判断条件: record.status !== "completed"')
+            console.log('  - 实际状态值:', JSON.stringify(firstRecord.status))
+          }
+          
+          // 如果没有记录，显示更详细的信息
+          if (this.records.length === 0) {
+            console.log('📋 当前用户暂无历史记录')
+            console.log('🔍 可能原因：')
+            console.log('  1. 用户首次使用，尚未上传和处理文档')
+            console.log('  2. 历史记录已被删除')
+            console.log('  3. 用户权限限制')
+            console.log('  4. 数据库中确实没有该用户的记录')
+          }
+        }
+        
+      } catch (error) {
+        console.error('❌ 加载历史记录失败:', error)
+        
+        // 特殊处理认证错误
+        if (error.message && (
+          error.message.includes('401') || 
+          error.message.includes('Unauthorized') ||
+          error.message.includes('JWT') ||
+          error.message.includes('Token')
+        )) {
+          console.error('🔐 认证错误，清理认证状态并跳转登录')
+          
+          // 清理认证状态
+          uni.removeStorageSync('token')
+          uni.removeStorageSync('refreshToken')
+          uni.removeStorageSync('isLoggedIn')
+          uni.removeStorageSync('userInfo')
+          uni.removeStorageSync('loginTime')
+          
+          uni.showModal({
+            title: '认证失败',
+            content: '登录状态已失效，请重新登录。\n\n可能原因：\n• JWT Token过期\n• Token格式错误\n• 用户权限不匹配',
+            showCancel: false,
+            confirmText: '重新登录',
+            success: () => {
+              uni.reLaunch({
+                url: '/pages/login/login'
               })
             }
-          }
+          })
+        } else {
+          // 其他错误使用通用处理
+          handleApiError(error, { page: 'history', action: 'loadHistory' })
         }
-      })
+      } finally {
+        this.isLoading = false
+      }
     },
     
-    exportHistory() {
+    // 应用筛选器
+    async applyFilters() {
+      this.pagination.page = 1
+      await this.loadHistory()
+    },
+    
+    // 切换页面
+    async changePage(page) {
+      this.pagination.page = page
+      await this.loadHistory()
+    },
+    
+    // 文档类型变化
+    onDocumentTypeChange(e) {
+      this.filterDocumentTypeIndex = e.detail.value
+    },
+    
+    // 状态变化
+    onStatusChange(e) {
+      this.filterStatusIndex = e.detail.value
+    },
+    
+    // 查看记录详情
+    viewRecordDetail(record) {
+      if (record.status === 'completed') {
+        this.viewResults(record)
+      } else {
+        uni.showToast({
+          title: '该记录尚未处理完成',
+          icon: 'none'
+        })
+      }
+    },
+    
+    // 查看结果
+    async viewResults(record) {
+      console.log('🔍 点击查看结果，记录信息:', record)
+      console.log('🔍 记录状态:', record.status)
+      console.log('🔍 记录的extractionTasks:', record.extractionTasks)
+      
+      // 获取taskId - 使用标准的任务结果API
+      let taskId = null
+      
+      if (record.extractionTasks && record.extractionTasks.length > 0) {
+        taskId = record.extractionTasks[0].id
+        console.log('📡 使用extractionTasks[0].id作为taskId:', taskId)
+      } else {
+        // 回退到使用record.taskId或record.id
+        taskId = record.taskId || record.id
+        console.log('📡 回退使用record.taskId/id作为taskId:', taskId)
+      }
+      
+      try {
+        uni.showLoading({
+          title: '加载结果中...',
+          mask: true
+        })
+        
+        if (!taskId) {
+          throw new Error('无法获取任务ID，record.extractionTasks[0].id、record.taskId和record.id都为空')
+        }
+        
+        console.log('📡 调用getHistoryResultsApi，参数:', record.id)
+        
+        // 使用新的历史记录提取结果API
+        const results = await getHistoryResultsApi(record.id)
+        
+        if (results) {
+          console.log('📥 从API获取的原始结果:', results)
+          console.log('📥 原始结果的data字段:', results.data)
+          console.log('📥 原始结果的result字段:', results.result)
+          console.log('📥 原始结果的extractedData字段:', results.extractedData)
+          console.log('📥 原始结果完整结构:', JSON.stringify(results, null, 2))
+          
+          // 后端现在返回统一的数据结构，直接构建完整结果
+          const completeResults = {
+            id: results.id || taskId,
+            taskId: results.taskId || taskId,
+            documentId: results.documentId || record.id,
+            status: results.status || 'COMPLETED',
+            progress: 100,
+            processingTime: results.processingTime || record.processingTime || 0,
+            currentStep: 'completed',
+            
+            // 从新API获取的完整提取数据
+            extractedData: results.extractedData || {},
+            
+            // 提取摘要信息
+            extractionSummary: results.extractionSummary || {
+              totalFields: this.getFixedTotalFieldsByType(record.documentType),
+              extractedFields: record.extractedFields || record.extractedFieldsCount || 0,
+              documentType: record.documentType,
+              processingTime: record.processingTime || 0,
+              averageConfidence: 0.92,
+              extractionRate: record.extractionRate || 0
+            },
+            
+            // 质量指标
+            qualityMetrics: results.qualityMetrics || {
+              averageConfidence: 0.92,
+              fieldCoverage: record.extractionRate || 0,
+              processingTime: record.processingTime || 0
+            },
+            
+            // 元数据
+            documentType: record.documentType,
+            fileName: record.fileName,
+            createdAt: results.createdAt || record.createdAt,
+            completedAt: results.completedAt || record.completedAt || record.updatedAt
+          }
+          
+          console.log('✅ 构建完整结果数据（与上传页面格式一致）:', completeResults)
+          console.log('🔍 extractedData结构:', completeResults.extractedData)
+          
+          // 存储完整结果数据，格式与上传页面完全一致
+          uni.setStorageSync('currentExtractionResults', completeResults)
+          uni.setStorageSync('currentTaskId', taskId)
+          
+          uni.hideLoading()
+          
+          // 跳转到结果页面（和上传页面完成后一样）
+          uni.navigateTo({
+            url: '/pages/results/results'
+          })
+        } else {
+          throw new Error('无法获取提取结果')
+        }
+        
+      } catch (error) {
+        uni.hideLoading()
+        console.error('❌ 加载提取结果失败:', error)
+        
+        // 如果API调用失败，尝试使用taskId通过URL参数跳转
+        const fallbackId = taskId || record.taskId || record.id
+        if (fallbackId) {
+          console.log('🔄 尝试通过URL参数传递taskId:', fallbackId)
+          uni.setStorageSync('currentTaskId', fallbackId)
+          uni.navigateTo({
+            url: '/pages/results/results'
+          })
+          
+          uni.showToast({
+            title: '正在重新加载结果...',
+            icon: 'loading',
+            duration: 2000
+          })
+        } else {
+          uni.showToast({
+            title: '无法获取任务ID，无法加载结果',
+            icon: 'error',
+            duration: 3000
+          })
+        }
+      }
+    },
+    
+    // 删除记录
+    async deleteRecord(record) {
+      try {
+        // 检查删除频率限制
+        const now = Date.now()
+        const oneMinute = 60 * 1000
+        
+        // 重置计数器（如果超过1分钟）
+        if (now - this.deleteOperations.lastDeleteTime > oneMinute) {
+          this.deleteOperations.count = 0
+        }
+        
+        // 检查是否超过删除限制
+        if (this.deleteOperations.count >= this.deleteOperations.maxDeletesPerMinute) {
+          uni.showModal({
+            title: '🛡️ 安全保护',
+            content: `为了防止误操作，每分钟最多只能删除 ${this.deleteOperations.maxDeletesPerMinute} 个记录。\n\n请稍后再试，或联系管理员批量删除。`,
+            showCancel: false,
+            confirmText: '我知道了'
+          })
+          return
+        }
+        
+        // 第一次确认
+        const firstConfirm = await new Promise((resolve) => {
+          uni.showModal({
+            title: '⚠️ 危险操作',
+            content: `确定要删除文档"${record.fileName}"的处理记录吗？\n\n⚠️ 此操作将永久删除：\n• 提取结果数据\n• 处理历史记录\n• 相关统计信息\n\n删除后无法恢复！`,
+            confirmText: '继续',
+            cancelText: '取消',
+            confirmColor: '#ff4757',
+            success: (res) => {
+              resolve(res.confirm)
+            }
+          })
+        })
+        
+        if (!firstConfirm) return
+        
+        // 第二次确认 - 需要输入文件名
+        const secondConfirm = await new Promise((resolve) => {
+          uni.showModal({
+            title: '🔒 最终确认',
+            content: `请再次确认删除操作\n\n文档名称：${record.fileName}\n任务ID：${record.taskId || record.id}\n\n这是最后的确认机会！`,
+            confirmText: '确认删除',
+            cancelText: '我再想想',
+            confirmColor: '#ff4757',
+            success: (res) => {
+              resolve(res.confirm)
+            }
+          })
+        })
+        
+        if (!secondConfirm) return
+        
+        uni.showLoading({
+          title: '删除中...',
+          mask: true
+        })
+        
+        // 调用后端删除API - 使用历史记录ID
+        const historyId = record.id // 使用历史记录的主ID
+        console.log('🗑️ 删除记录，historyId:', historyId, '记录信息:', record)
+        
+        await deleteDocumentRecordApi(historyId)
+        
+        // API调用成功后，从本地列表中移除
+        const index = this.records.findIndex(r => r.id === historyId)
+        if (index > -1) {
+          this.records.splice(index, 1)
+          
+          // 更新分页信息
+          this.pagination.total = Math.max(0, this.pagination.total - 1)
+          this.pagination.totalPages = Math.ceil(this.pagination.total / this.pagination.pageSize)
+        }
+        
+        // 更新删除操作计数
+        this.deleteOperations.count++
+        this.deleteOperations.lastDeleteTime = Date.now()
+        
+        uni.hideLoading()
+        uni.showToast({
+          title: `历史记录删除成功 (${this.deleteOperations.count}/${this.deleteOperations.maxDeletesPerMinute})`,
+          icon: 'success'
+        })
+
+        // 删除成功后刷新历史记录列表
+        console.log('🔄 删除成功，刷新历史记录列表...')
+        setTimeout(() => {
+          this.loadHistory()
+        }, 500) // 延迟500ms刷新，让用户看到删除成功提示
+        
+      } catch (error) {
+        uni.hideLoading()
+        console.error('删除记录失败:', error)
+        uni.showToast({
+          title: '删除失败',
+          icon: 'error'
+        })
+      }
+    },
+    
+    // 获取状态文本
+    getStatusText(status) {
+      const statusMap = {
+        'completed': '已完成',
+        'processing': '处理中',
+        'failed': '失败',
+        'pending': '等待中'
+      }
+      return statusMap[status] || '未知'
+    },
+    
+    // 获取文档类型标签
+    getDocumentTypeLabel(documentType) {
+      const typeMap = {
+        'fund_contract': '基金合同',
+        'custody_agreement': '托管协议',
+        'prospectus': '招募说明书'
+      }
+      return typeMap[documentType] || '未知类型'
+    },
+    
+    // 格式化时间
+    formatTime(timeString) {
+      try {
+        const date = new Date(timeString)
+        return date.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (error) {
+        return timeString
+      }
+    },
+    
+    // 获取提取字段显示文本
+    getExtractedFieldsDisplay(record) {
+      // 尝试多种可能的字段名
+      const extractedFields = record.extractedFields || record.extractedFieldsCount || record.fieldsExtracted || 0
+      const totalFields = this.getFixedTotalFieldsByType(record.documentType)
+      
+      return `${extractedFields}/${totalFields}`
+    },
+    
+    // 获取处理时间显示文本
+    getProcessingTimeDisplay(record) {
+      // 尝试多种可能的字段名和格式
+      let processingTime = record.processingTime || record.processTime || record.duration || 0
+      
+      // 如果是毫秒，转换为秒
+      if (processingTime > 1000) {
+        processingTime = Math.round(processingTime / 1000)
+      }
+      
+      return processingTime > 0 ? `${processingTime}秒` : '未知'
+    },
+    
+    // 根据文档类型获取固定的总字段数（与results页面保持一致）
+    getFixedTotalFieldsByType(documentType) {
+      switch (documentType) {
+        case 'fund_contract':
+          return 44  // 基金合同类型
+        case 'custody_agreement':
+          return 22  // 托管协议类型
+        case 'prospectus':
+          return 22  // 招募说明书类型
+        default:
+          return 22  // 默认使用22个字段
+      }
+    },
+    
+    // 处理翻译插件问题
+    handleTranslationPluginIssues() {
+      try {
+        // 检测是否有沉浸式翻译插件
+        if (typeof window !== 'undefined' && (
+          window.immersiveTranslate || 
+          document.querySelector('[data-immersive-translate]') ||
+          document.querySelector('.immersive-translate')
+        )) {
+          console.warn('⚠️ 检测到沉浸式翻译插件，可能影响页面正常运行')
+          console.log('💡 建议：在此页面暂时关闭翻译插件以避免干扰')
+        }
+      } catch (error) {
+        // 忽略检测错误
+      }
+    },
+    
+    // 防止翻译干扰
+    preventTranslationInterference() {
+      try {
+        if (typeof document !== 'undefined') {
+          // 为关键元素添加不翻译标记
+          const criticalElements = document.querySelectorAll('.records-section, .pagination-section, .filter-section')
+          criticalElements.forEach(el => {
+            el.setAttribute('translate', 'no')
+            el.setAttribute('data-immersive-translate-walked', 'true')
+          })
+        }
+      } catch (error) {
+        // 忽略处理错误
+      }
+    },
+    
+    // 测试按钮点击（调试用）
+    testViewResults(record) {
+      console.log('🧪 测试按钮点击 - 记录:', record)
+      console.log('🧪 按钮是否应该禁用:', record.status !== 'completed')
+      
       uni.showToast({
-        title: '导出成功',
+        title: '按钮点击有效！',
         icon: 'success'
       })
+      
+      // 如果状态正确，调用实际的查看结果方法
+      if (record.status?.toLowerCase() === 'completed') {
+        this.viewResults(record)
+      } else {
+        uni.showModal({
+          title: '无法查看结果',
+          content: `记录状态为: ${record.status}\n只有状态为"completed"的记录才能查看结果`,
+          showCancel: false
+        })
+      }
     },
     
-    clearHistory() {
-      uni.showModal({
-        title: '确认清空',
-        content: '确定要清空所有历史记录吗？此操作不可恢复。',
-        success: (res) => {
-          if (res.confirm) {
-            this.historyList = []
-            uni.showToast({
-              title: '清空成功',
-              icon: 'success'
-            })
-          }
-        }
+    // 添加测试记录（调试用）
+    addTestRecord() {
+      const testRecord = {
+        id: 'test-001',
+        taskId: 'test-task-001',
+        fileName: '测试文档.pdf',
+        status: 'completed',
+        documentType: 'custody_agreement',
+        extractedFields: 19,
+        extractedFieldsCount: 19,
+        processingTime: 2.8,
+        createdAt: new Date().toISOString()
+      }
+      
+      this.records.push(testRecord)
+      console.log('✅ 已添加测试记录:', testRecord)
+      
+      uni.showToast({
+        title: '测试记录已添加',
+        icon: 'success'
       })
-    },
-    
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--
-      }
-    },
-    
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++
-      }
     }
+  },
+  
+  mounted() {
+    // 页面挂载后，确保翻译插件不干扰
+    this.preventTranslationInterference()
+  },
+  
+  onLoad() {
+    // 检查用户是否已登录，未登录则跳转到登录页
+    if (!checkAuthAndRedirect()) {
+      return
+    }
+    
+    // 处理沉浸式翻译插件可能的干扰
+    this.handleTranslationPluginIssues()
+    
+    this.loadHistory()
   }
 }
 </script>
 
-<style>
+<style scoped>
 .history-container {
-  min-height: 100%;
-  background: #f5f5f5;
-  padding: 0;
-  width: 100%;
-  box-sizing: border-box;
+  padding: 20rpx;
 }
 
-.stats-section {
-  margin-bottom: 40rpx;
-  margin-left: -20rpx;
-  padding: 20rpx 20rpx 20rpx 20rpx;
-}
-
-.stats-card {
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20rpx;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-size: 48rpx;
-  font-weight: bold;
-  color: #333333;
-  margin-bottom: 8rpx;
-}
-
-.stat-label {
-  display: block;
-  font-size: 22rpx;
-  color: #666666;
-}
-
+/* 筛选器样式 */
 .filter-section {
-  margin-bottom: 40rpx;
-  margin-left: -20rpx;
-  padding: 0 20rpx 0 20rpx;
+  margin-bottom: 30rpx;
 }
 
 .filter-card {
   background: #ffffff;
-  border-radius: 20rpx;
+  border-radius: 15rpx;
   padding: 30rpx;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 25rpx rgba(0, 0, 0, 0.1);
 }
 
-.filter-header {
+.filter-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.filter-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
-}
-
-.clear-filter-btn {
-  background: #666666;
-  color: #ffffff;
-  border: none;
-  border-radius: 6rpx;
-  padding: 10rpx 20rpx;
-  font-size: 24rpx;
-}
-
-.filter-options {
-  display: flex;
-  flex-direction: column;
+  align-items: end;
   gap: 30rpx;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15rpx;
-  align-items: flex-start;
-}
-
-.filter-label {
-  font-size: 28rpx;
-  color: #333333;
-  font-weight: bold;
-}
-
-.filter-buttons {
-  display: flex;
-  gap: 15rpx;
-  justify-content: flex-start;
-  align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.filter-btn {
-  flex: 0 0 auto;
+.filter-group {
+  flex: 1;
+  min-width: 200rpx;
+}
+
+.filter-label {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--color-title);
+  margin-bottom: 15rpx;
+}
+
+.picker-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70rpx;
+  padding: 0 20rpx;
   background: #f8f9fa;
-  color: #666666;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 10rpx;
+  cursor: pointer;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: var(--color-text);
+}
+
+.picker-arrow {
+  font-size: 20rpx;
+  color: var(--color-secondary);
+}
+
+.filter-btn {
+  height: 70rpx;
+  padding: 0 30rpx;
+  background: var(--color-primary);
+  color: white;
   border: none;
-  border-radius: 25rpx;
-  padding: 15rpx 55rpx;
-  font-size: 24rpx;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
-  min-width: 160rpx;
 }
 
-.filter-btn.active {
-  background: #333333;
-  color: #ffffff;
+.filter-btn:hover {
+  background: var(--color-primary-dark);
 }
 
-.date-inputs {
+.filter-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* 记录列表样式 */
+.records-section {
+  margin-bottom: 30rpx;
+}
+
+.loading-placeholder, .empty-placeholder {
+  text-align: center;
+  padding: 100rpx 20rpx;
+}
+
+.loading-text, .empty-text {
+  display: block;
+  font-size: 32rpx;
+  color: var(--color-secondary);
+  margin-bottom: 20rpx;
+}
+
+.empty-icon {
+  display: block;
+  font-size: 80rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
+}
+
+.empty-desc {
+  display: block;
+  font-size: 26rpx;
+  color: var(--color-secondary);
+  opacity: 0.7;
+}
+
+.data-recovery-tip {
+  margin-top: 40rpx;
+  padding: 30rpx;
+  background: #fff3cd;
+  border: 1rpx solid #ffeaa7;
+  border-radius: 15rpx;
+  text-align: left;
+}
+
+.recovery-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #856404;
+  margin-bottom: 15rpx;
+}
+
+.recovery-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #856404;
+  margin-bottom: 15rpx;
+}
+
+.recovery-item {
+  display: block;
+  font-size: 22rpx;
+  color: #856404;
+  margin-bottom: 8rpx;
+  padding-left: 20rpx;
+}
+
+.recovery-action {
+  display: block;
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #856404;
+  margin-top: 15rpx;
+  padding: 15rpx;
+  background: rgba(255, 234, 167, 0.5);
+  border-radius: 8rpx;
+}
+
+.debug-section {
+  margin-top: 40rpx;
+  padding: 20rpx;
+  background: #f0f8ff;
+  border: 1rpx solid #87ceeb;
+  border-radius: 15rpx;
+}
+
+.debug-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #4682b4;
+  margin-bottom: 15rpx;
+}
+
+.debug-btn {
+  background: #4682b4;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  padding: 15rpx 20rpx;
+  font-size: 24rpx;
+}
+
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.record-card {
+  background: #ffffff;
+  border-radius: 15rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 25rpx rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.record-card:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 12rpx 35rpx rgba(0, 0, 0, 0.15);
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.record-title {
   display: flex;
   align-items: center;
   gap: 15rpx;
 }
 
-.date-input {
-  flex: 1;
-  background: #f8f9fa;
-  border: none;
-  border-radius: 10rpx;
-  padding: 20rpx;
-  font-size: 26rpx;
-  min-height: 60rpx;
+.file-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--color-title);
 }
 
-.date-separator {
+.status-badge {
+  padding: 8rpx 15rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.status-badge.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.processing {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.pending {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.record-time {
   font-size: 24rpx;
-  color: #666666;
+  color: var(--color-secondary);
 }
 
-.history-section {
-  margin-bottom: 40rpx;
-  margin-left: -20rpx;
-  padding: 0 20rpx 0 20rpx;
-}
-
-.history-header {
+.record-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  gap: 30rpx;
 }
 
-.history-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
+.record-info {
+  display: flex;
+  gap: 40rpx;
+  flex: 1;
 }
 
-.history-actions {
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  background: #f8f9fc;
+  border-radius: 12rpx;
+  padding: 20rpx 25rpx;
+  border-left: 4rpx solid #1B2A41;
+  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 8rpx rgba(27, 42, 65, 0.08);
+}
+
+.info-item:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(27, 42, 65, 0.12);
+  background: #f0f4f8;
+}
+
+.info-label {
+  font-size: 22rpx;
+  color: #666666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5rpx;
+  margin-bottom: 5rpx;
+}
+
+.info-value {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1B2A41;
+  line-height: 1.2;
+}
+
+/* 不同类型信息框的主题颜色 */
+.info-item.info-type {
+  border-left-color: #007AFF;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f3ff 100%);
+}
+
+.info-item.info-type:hover {
+  background: linear-gradient(135deg, #e6f3ff 0%, #d9edff 100%);
+}
+
+.info-item.info-fields {
+  border-left-color: #28a745;
+  background: linear-gradient(135deg, #f0fdf4 0%, #e6ffed 100%);
+}
+
+.info-item.info-fields:hover {
+  background: linear-gradient(135deg, #e6ffed 0%, #d9f7e6 100%);
+}
+
+.info-item.info-time {
+  border-left-color: #C9A86B;
+  background: linear-gradient(135deg, #fefcf3 0%, #fdf7e8 100%);
+}
+
+.info-item.info-time:hover {
+  background: linear-gradient(135deg, #fdf7e8 0%, #fcf2db 100%);
+}
+
+/* 为info-value添加图标 */
+.info-item.info-type .info-value::before {
+  content: "📄 ";
+  margin-right: 8rpx;
+}
+
+.info-item.info-fields .info-value::before {
+  content: "📊 ";
+  margin-right: 8rpx;
+}
+
+.info-item.info-time .info-value::before {
+  content: "⏱️ ";
+  margin-right: 8rpx;
+}
+
+.record-actions {
   display: flex;
   gap: 15rpx;
 }
 
 .action-btn {
-  background: #333333;
-  color: #ffffff;
-  border: none;
-  border-radius: 6rpx;
-  padding: 10rpx 20rpx;
+  padding: 15rpx 25rpx;
+  border-radius: 8rpx;
   font-size: 24rpx;
-}
-
-.action-btn.small {
-  /* 调整为较长长度 */
-  padding: 8rpx 90rpx;
-  font-size: 24rpx;
-}
-
-.action-btn.view {
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
-.action-btn.download {
-  background: var(--color-accent);
-  color: #ffffff;
-}
-
-.action-btn.delete {
-  background: #ff4757;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.history-item {
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
+  border: none;
 }
 
-.history-item:hover {
-  background-color: #f8f9fa;
+.view-btn {
+  background: var(--color-primary);
+  color: white;
 }
 
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
+.view-btn:hover {
+  background: var(--color-primary-dark);
 }
 
-.item-info {
-  flex: 1;
+
+.delete-btn {
+  background: #ff4757;
+  color: white;
 }
 
-.item-name {
-  display: block;
-  font-size: 28rpx;
-  color: #333333;
-  font-weight: bold;
-  margin-bottom: 10rpx;
+.delete-btn:hover {
+  background: #ff3742;
 }
 
-.item-time {
-  display: block;
-  font-size: 24rpx;
-  color: #666666;
+.action-btn:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
 }
 
-.item-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8rpx 30rpx;
-  border-radius: 30rpx;
-  font-size: 24rpx;
-  font-weight: bold;
-  text-align: center;
-}
-
-.item-status.success {
-  color: #2D6A4F;
-  border: 2rpx solid #2D6A4F;
-  background: rgba(45, 106, 79, 0.1);
-}
-
-.item-status.processing {
-  color: #856404;
-  border: 2rpx solid #856404;
-  background: rgba(133, 100, 4, 0.1);
-}
-
-.item-status.failed {
-  color: #A63D40;
-  border: 2rpx solid #A63D40;
-  background: rgba(166, 61, 64, 0.1);
-}
-
-.status-text {
-  font-weight: bold;
-}
-
-.item-details {
-  margin-bottom: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10rpx;
-}
-
-.detail-row:last-child {
-  margin-bottom: 0;
-}
-
-.detail-label {
-  font-size: 24rpx;
-  color: #666666;
-}
-
-.detail-value {
-  font-size: 24rpx;
-  color: #333333;
-  font-weight: bold;
-}
-
-.item-actions {
-  display: flex;
-  gap: 15rpx;
-}
-
-.empty-state {
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 80rpx 40rpx;
-  text-align: center;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
-}
-
-.empty-icon {
-  margin-bottom: 30rpx;
-}
-
-.empty-icon .icon {
-  font-size: 100rpx;
-}
-
-.empty-title {
-  display: block;
-  font-size: 32rpx;
-  color: #333333;
-  font-weight: bold;
-  margin-bottom: 15rpx;
-}
-
-.empty-desc {
-  display: block;
-  font-size: 28rpx;
-  color: #666666;
-}
-
+/* 分页器样式 */
 .pagination-section {
-  margin-bottom: 40rpx;
-  margin-left: -20rpx;
-  padding: 0 20rpx 0 20rpx;
+  display: flex;
+  justify-content: center;
+  margin-top: 40rpx;
 }
 
 .pagination {
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 30rpx;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
+  gap: 20rpx;
+  background: #ffffff;
+  padding: 20rpx 30rpx;
+  border-radius: 15rpx;
+  box-shadow: 0 8rpx 25rpx rgba(0, 0, 0, 0.1);
 }
 
 .page-btn {
-  background: #333333;
-  color: #ffffff;
+  padding: 15rpx 25rpx;
+  background: var(--color-primary);
+  color: white;
   border: none;
-  border-radius: 6rpx;
-  padding: 15rpx 30rpx;
-  font-size: 24rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+  background: var(--color-primary-dark);
 }
 
 .page-btn:disabled {
-  background: #cccccc;
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .page-info {
-  text-align: center;
+  padding: 0 20rpx;
 }
 
 .page-text {
-  font-size: 24rpx;
-  color: #666666;
+  font-size: 28rpx;
+  color: var(--color-title);
+  font-weight: 600;
 }
 
 .btn-text {
   color: inherit;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    gap: 20rpx;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .record-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20rpx;
+  }
+  
+  .record-info {
+    flex-direction: column;
+    gap: 15rpx;
+  }
+  
+  .record-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style> 

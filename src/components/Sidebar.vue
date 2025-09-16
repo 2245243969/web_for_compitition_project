@@ -34,11 +34,29 @@
         </view>
       </view>
 
+      <!-- 底部用户信息 -->
+      <view class="sidebar-footer">
+        <view class="user-info">
+          <view class="user-avatar">
+            <text class="avatar-text">{{ getUserInitials() }}</text>
+          </view>
+          <view class="user-details">
+            <text class="user-name">{{ currentUser.displayName || currentUser.username || '用户' }}</text>
+            <text class="user-role">{{ currentUser.role || '普通用户' }}</text>
+          </view>
+          <view class="logout-btn" @click="handleLogout">
+            <text class="logout-icon">🚪</text>
+          </view>
+        </view>
+      </view>
+
     </view>
   </view>
 </template>
 
 <script>
+import { getCurrentUser, logout, checkAuthAndRedirect } from '../utils/auth.js'
+import { logoutApi } from '../utils/api.js'
 export default {
   name: 'Sidebar',
   props: {
@@ -50,6 +68,7 @@ export default {
   data() {
     return {
       currentPage: '',
+      currentUser: {},
       menuItems: [
         {
           path: '/pages/index/index',
@@ -75,12 +94,20 @@ export default {
           path: '/pages/statistics/statistics',
           text: '统计分析',
           icon: '📈'
+        },
+        {
+          path: '/pages/settings/settings',
+          text: '用户设置',
+          icon: '⚙️'
         }
       ]
     }
   },
   mounted() {
     this.updateCurrentPage()
+    this.loadUserInfo()
+    // 检查用户登录状态
+    checkAuthAndRedirect()
   },
   methods: {
     updateCurrentPage() {
@@ -91,6 +118,56 @@ export default {
         this.currentPage = '/' + currentPage.route
       }
     },
+    
+    loadUserInfo() {
+      // 加载当前用户信息
+      const user = getCurrentUser()
+      this.currentUser = user || {}
+    },
+    
+    getUserInitials() {
+      // 获取用户名首字母作为头像
+      const user = this.currentUser
+      if (user.username) {
+        return user.username.charAt(0).toUpperCase()
+      } else if (user.email) {
+        return user.email.charAt(0).toUpperCase()
+      }
+      return 'U'
+    },
+    
+    async handleLogout() {
+      uni.showModal({
+        title: '确认登出',
+        content: '您确定要退出登录吗？',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              // 调用API登出
+              await logoutApi()
+              
+              uni.showToast({
+                title: '已安全退出',
+                icon: 'success'
+              })
+              
+              // 跳转到登录页
+              setTimeout(() => {
+                uni.reLaunch({
+                  url: '/pages/login/login'
+                })
+              }, 1500)
+              
+            } catch (error) {
+              console.error('登出API调用失败:', error)
+              // 即使API失败，也执行本地登出
+              logout()
+            }
+          }
+        }
+      })
+    },
+    
     navigateTo(path) {
       if (this.currentPage !== path) {
         uni.reLaunch({
@@ -99,6 +176,7 @@ export default {
       }
       this.closeSidebar()
     },
+    
     closeSidebar() {
       this.$emit('close')
     }
@@ -281,6 +359,28 @@ export default {
   display: block;
   color: #B0B3B8;
   font-size: 22rpx;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.logout-icon {
+  font-size: 28rpx;
+  color: #ffffff;
 }
 
 /* 桌面端样式 */
